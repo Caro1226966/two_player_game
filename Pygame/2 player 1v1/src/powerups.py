@@ -8,7 +8,7 @@ class BasePowerup(p.sprite.Sprite):
     def __init__(self, x, y, game):
         super(BasePowerup, self).__init__()  #FIXME
 
-        self.image = game.loader.get_image('fastshoot_1')
+        self.image = game.loader.get_resource('fastshoot_1')
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
 

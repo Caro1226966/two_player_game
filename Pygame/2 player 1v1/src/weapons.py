@@ -4,7 +4,7 @@ class BaseWeapon:
         self.ammo = ammo  # ammo means ammunition
         self.damage = damage
         # self.bullet_speed = bullet_speed  Use this if custom bullet speed is wanted
-        # self.icon =   If images are wanted they can be added here using this
+        # self.icon =   If resources are wanted they can be added here using this
 
 
 class Smg(BaseWeapon):

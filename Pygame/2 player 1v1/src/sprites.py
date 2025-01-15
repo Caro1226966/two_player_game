@@ -1,19 +1,25 @@
 from config import *
 from powerups import POWERUP_COOLDOWN_TYPE
 from weapons import *
-from platforms import *
 
 
-class AnimatedSprite(p.sprite.Sprite):
+class BaseSprite(p.sprite.Sprite):
+    def __init__(self, x, y):
+        super(BaseSprite, self).__init__()
+
+        self.image = p.Surface((64, 64))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+
+
+class AnimatedSprite(BaseSprite):
     def __init__(self, x, y, images: list):
-        super().__init__()
+        super().__init__(x, y)
 
         self.delay = 1
         self.images = images
         self.index = 0
         self.image = self.images[self.index]
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (x, y)
         self.current = 0
 
     def update(self, dt):
@@ -26,23 +32,17 @@ class AnimatedSprite(p.sprite.Sprite):
             self.current = 0
 
 
-class Bullet(p.sprite.Sprite):
+class Bullet(BaseSprite):
 
     def __init__(self, x, y, velocity, game, origin, weapon):
-        super(Bullet, self).__init__()
+        super(Bullet, self).__init__(x, y)
 
         # Gives size of rectangle
         # self.image = p.Surface((20, 20))
         # self.image.fill((255, 255, 255))
 
         # Gives colour of rectangle
-        self.image = game.loader.get_image('bullet')
-
-        width, height = self.image.get_size()
-
-        # gets the rectangle dimensions
-        self.rect = self.image.get_rect()
-        self.rect.topleft = (x - width // 2, y - height // 2)
+        self.image = game.loader.get_resource('bullet')
 
         # This makes the velocity
         self.velocity = velocity
@@ -70,13 +70,13 @@ class Bullet(p.sprite.Sprite):
             self.game.all_sprites.remove(self)
 
 
-class Player(p.sprite.Sprite):
+class Player(BaseSprite):
 
     def __init__(self, x, y, is_player_one, game, player_direction=NORTH, current_num=0, can_jump=True, health=20):
-        super(Player, self).__init__()
+        super(Player, self).__init__(x, y)
 
         # Gives image of rectangle
-        self.image = game.loader.get_image("purple_player")
+        self.image = game.loader.get_resource("purple_player")
 
         # self.image = p.Surface((64, 64))
         # self.image.fill((255, 0, 0))
@@ -210,7 +210,6 @@ class Player(p.sprite.Sprite):
         # Apply Friction
         self.velocity.x *= FRICTION
 
-
         # Player Controls
         keys = p.key.get_pressed()
         mouse = p.mouse.get_pressed()
@@ -220,12 +219,12 @@ class Player(p.sprite.Sprite):
         if (keys[p.K_d] and self.is_player_one) or (keys[p.K_RIGHT] and not self.is_player_one):
             self.velocity.x = PLAYER_SPEED
             self.player_direction.x = 1
-            self.image = self.game.loader.get_image('purple_player_right')
+            self.image = self.game.loader.get_resource('purple_player_right')
 
         if (keys[p.K_a] and self.is_player_one) or (keys[p.K_LEFT] and not self.is_player_one):
             self.velocity.x = -PLAYER_SPEED
             self.player_direction.x = -1
-            self.image = self.game.loader.get_image('purple_player_left')
+            self.image = self.game.loader.get_resource('purple_player_left')
 
         # Handle Vertical Movement (Jumping)
         self.player_direction.y = 0
@@ -335,3 +334,71 @@ class Player(p.sprite.Sprite):
         self.game.death = True
 
         self.image.fill((255, 0, 0))
+
+
+class BasePlatform(BaseSprite):
+
+    def __init__(self, x, y, image, game):
+        super(BasePlatform, self).__init__(x, y)
+
+        self.image = image
+        self.game = game
+
+
+class AnimatedPlatform(AnimatedSprite):
+    def __init__(self, x, y, images, game):
+        super(AnimatedPlatform, self).__init__(x, y, images)
+
+        self.game = game
+
+
+class GrassPlatform(p.sprite.Sprite):
+
+    def __init__(self, x, y, width, height, game):
+        super(GrassPlatform, self).__init__()
+
+        self.image = game.loader.get_resource("default_platform_1")
+
+        # self.image = p.Surface((width, height))
+        # self.image.fill((0, 255, 0))
+
+        self.rect = self.image.get_rect()
+
+        self.rect.topleft = (x, y)
+
+
+class Jump_platform(BasePlatform):
+
+    def __init__(self, x, y, game):
+        super(Jump_platform, self).__init__(x, y, game.loader.get_resource("jump_platform_1"), game)
+
+        #self.image = p.Surface((width, height))
+        # self.image.fill((0, 0, 255))
+
+
+class Weak_platform(BasePlatform):
+
+    def __init__(self, x, y, game):
+        images = game.loader.get_resource("weak_platform")
+        super(Weak_platform, self).__init__(x, y, images[0], game)
+
+        self.images = images
+        self.current_health = 5
+
+    def update(self, dt, game):
+        bullet_collision = p.sprite.spritecollide(self, self.game.bullet, dokill=True)
+
+        for bullet in bullet_collision:
+            self.current_health -= 1
+
+            index = 5 - self.current_health
+            self.image = self.images[index]
+
+            if self.current_health <= 0:
+                self.game.all_sprites.remove(self)
+                self.game.all_platforms.remove(self)
+
+
+class Lava_platform(BasePlatform):
+    def __init__(self, x, y, game):
+        super(Lava_platform, self).__init__(x, y, game.loader.get_resource("lava_platform_1"), game)

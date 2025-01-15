@@ -5,13 +5,12 @@ from powerups import *
 from config import *
 import os
 
-
 # rect stays at 976 then sometimes changes to 977 presumably since the acceleration and velocity is accumulating
 #  and when the ut + 0.5xat^2 for the y axis is greater than 0.5 pygame rounds it to 977.
 
 # WHEN ON TOP OF A PLATFORM STOP ADDING TO ACCELERATION
 
-# for image in images:
+# for image in resources:
 #     pygame.image.load(image)
 
 
@@ -40,16 +39,51 @@ RES_DIR = "..\\res"
 
 class ResourceLoader:
     def __init__(self):
-        self.images = {}
-        for file in os.listdir(RES_DIR):  # Getcwd means get current working directory
-            if file.endswith('.png') or file.endswith('.gif'):
-                # print(file.replace('.png', ''))   #OTHERS
-                # print(file.split('.')[0])         #OTHERS
-                file_path = os.path.join(RES_DIR, file)
-                self.images[file[:-4]] = p.image.load(file_path).convert_alpha()
+        self.resources = {}
 
-    def get_image(self, key):
-        return self.images.get(key)
+        self._load()
+
+    def _load(self):
+        files = os.listdir(RES_DIR)
+        files.sort()
+        current = files[0]
+        current_split_file = current.split('.')[0].split('_')
+        current_res_type = '_'.join(current_split_file[:-1])  # Bullet empty as join has only 1 element
+        temp = []
+        for i, file in enumerate(files):  # Getcwd means get current working directory
+            if i == 0:
+                continue
+
+            temp.append(current)
+
+            split_file = file.split('_')
+            res_type = '_'.join(split_file[:-1])
+
+            if current_res_type != res_type:
+                if len(temp) == 1:
+                    self.resources[current_res_type] = p.image.load(os.path.join(RES_DIR, temp[0])).convert_alpha()
+                    temp = []
+                else:
+                    self.resources[current_res_type] = [p.image.load(os.path.join(RES_DIR, x)).convert_alpha() for x in temp]
+                    temp = []
+
+            current_res_type = res_type
+            current = file
+            print(self.resources)
+
+        temp.append(current)
+        self.resources[current_res_type] = temp
+        print(current, current_res_type)
+
+        # exit()
+        # if file.endswith('.png') or file.endswith('.gif'):
+        # print(file.replace('.png', ''))   #OTHERS
+        # print(file.split('.')[0])         #OTHERS
+        # file_path = os.path.join(RES_DIR, file)
+        # self.resources[file[:-4]] = p.image.load(file_path).convert_alpha()
+
+    def get_resource(self, key):
+        return self.resources.get(key)
 
 
 class State:
@@ -98,20 +132,20 @@ class Manager:
         self.player2 = Player(1600, 1000, False, self)
 
         # These are the other objects
-        platform = Platform(0, 1040, 192, 64, self)
-        platform1 = Platform(190, 1040, 192, 64, self)
-        platform2 = Platform(380, 1040, 192, 64, self)
-        platform3 = Platform(570, 1040, 192, 64, self)
-        #platform4 = Platform(760, 1040, 192, 64, self)
-        platform5 = Platform(950, 1040, 192, 64, self)
-        platform6 = Platform(1140, 1040, 192, 64, self)
-        platform7 = Platform(1330, 1040, 192, 64, self)
-        platform8 = Platform(1520, 1040, 192, 64, self)
-        platform9 = Platform(1710, 1040, 192, 64, self)
-        platform10 = Platform(1900, 1040, 192, 64, self)
+        platform = GrassPlatform(0, 1040, 192, 64, self)
+        platform1 = GrassPlatform(190, 1040, 192, 64, self)
+        platform2 = GrassPlatform(380, 1040, 192, 64, self)
+        platform3 = GrassPlatform(570, 1040, 192, 64, self)
+        #platform4 = GrassPlatform(760, 1040, 192, 64, self)
+        platform5 = GrassPlatform(950, 1040, 192, 64, self)
+        platform6 = GrassPlatform(1140, 1040, 192, 64, self)
+        platform7 = GrassPlatform(1330, 1040, 192, 64, self)
+        platform8 = GrassPlatform(1520, 1040, 192, 64, self)
+        platform9 = GrassPlatform(1710, 1040, 192, 64, self)
+        platform10 = GrassPlatform(1900, 1040, 192, 64, self)
 
         # bouncy platforms
-        jump_platform = Jump_platform(1000, 600, 192, 64, self)
+        jump_platform = Jump_platform(1000, 600, self)
 
         # weak platforms
         weak_platform = Weak_platform(1500, 300, 192, 64, self)
